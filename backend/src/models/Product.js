@@ -41,9 +41,9 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: null, // null = unlimited / made-to-order (e.g. tailoring)
     },
-    imageUrl: {
-      type: String,
-      default: '',
+    image: {
+      data: Buffer,
+      contentType: String, // e.g. 'image/jpeg'
     },
     isAvailable: {
       type: Boolean,

@@ -10,6 +10,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import committeeRoutes from './routes/committeeRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import chatbotRoutes from './routes/chatbotRoutes.js';
+import marketInsightRoutes from './routes/marketInsightRoutes.js';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use('/api/orders', orderRoutes);               // Person A + B
 app.use('/api/kameti/committees', committeeRoutes);// kameti feature (from Micro-Nisa)
 app.use('/api/kameti/notifications', notificationRoutes); // kameti feature (from Micro-Nisa)
 app.use('/api/chatbot', chatbotRoutes);            // Person C
+app.use('/api/market-insights', marketInsightRoutes); // Person C
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });

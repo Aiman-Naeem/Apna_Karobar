@@ -1,12 +1,11 @@
 import express from 'express';
 import ChatMessage from '../models/ChatMessage.js';
 import { verifyToken } from '../middleware/auth.js';
+import { getChatbotReply } from '../services/aiService.js';
 
 const router = express.Router();
 
-// Send a message to the AI business-advice chatbot.
-// TODO (Person C): replace the placeholder reply below with a real call to your
-// chosen LLM API. Keep the request/response shape the same so the frontend doesn't change.
+// Send a message to the AI business-advice chatbot (calls ai-service).
 router.post('/message', verifyToken, async (req, res) => {
   try {
     const { message, sessionId } = req.body;
@@ -21,9 +20,13 @@ router.post('/message', verifyToken, async (req, res) => {
       message,
     }).save();
 
-    // --- placeholder reply — swap this block for the real LLM API call ---
-    const replyText = "Thanks for your question! (AI response not yet connected.)";
-    // -----------------------------------------------------------------------
+    // Pull recent history in this session to give ai-service conversational context
+    const history = await ChatMessage.find({ user: req.userId, sessionId })
+      .sort({ createdAt: 1 })
+      .limit(20)
+      .select('role message -_id');
+
+    const replyText = await getChatbotReply(req.userId, message, history);
 
     const reply = await new ChatMessage({
       user: req.userId,

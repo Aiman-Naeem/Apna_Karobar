@@ -39,8 +39,8 @@ const storefrontSchema = new mongoose.Schema(
       trim: true,
     },
     coverImage: {
-      type: String,
-      default: '',
+      data: Buffer,
+      contentType: String, // e.g. 'image/jpeg'
     },
     isActive: {
       type: Boolean,
