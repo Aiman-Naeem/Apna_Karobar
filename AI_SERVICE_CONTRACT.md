@@ -4,6 +4,8 @@ This is the interface between `backend/` (Node/Express, Person B) and `ai-servic
 
 **Base URL (local dev):** `http://localhost:8000` — set via `AI_SERVICE_URL` in `backend/.env`
 
+Note: API_CONTRACT.md's GET /api/market-insights (Express, called by the frontend) and AI_SERVICE_CONTRACT.md's GET /market-insights (Python, called by the backend) are two different endpoints with the same name at different layers. Person A only ever calls the Express one.
+
 ## How this differs from the frontend↔backend contract
 
 - This crosses a **language boundary** (Node calling Python), so field name typos or type mismatches won't get caught by any shared code — double check field names match exactly on both sides.

@@ -133,7 +133,7 @@ router.post('/join', verifyToken, async (req, res) => {
 router.post('/:committeeId/pay', verifyToken, async (req, res) => {
   try {
     const { committeeId } = req.params;
-    const { month } = req.body;
+    const month = Number(req.body.month);
 
     const committee = await Committee.findById(committeeId);
     if (!committee) return res.status(404).json({ error: 'Committee not found' });
@@ -146,39 +146,46 @@ router.post('/:committeeId/pay', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'Payment already made' });
     }
 
+    const user = await User.findById(req.userId);
+    const currentTrustScore = user.trustScore;
+
     payment.status = 'paid';
     payment.paidDate = new Date();
     payment.transactionId = `TXN_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     await committee.save();
 
-    const user = await User.findById(req.userId);
+    let trustScore = currentTrustScore;
+    try {
+      // Gather this user's full payment history across all their committees —
+      // ai-service's model expects the full history, not just this one payment.
+      const allCommittees = await Committee.find({ members: req.userId });
+      const paymentHistory = allCommittees.flatMap((c) =>
+        c.payments.filter((p) => p.userId.toString() === req.userId)
+      );
 
-    // Gather this user's full payment history across all their committees —
-    // ai-service's model expects the full history, not just this one payment.
-    const allCommittees = await Committee.find({ members: req.userId });
-    const paymentHistory = allCommittees.flatMap((c) =>
-      c.payments.filter((p) => p.userId.toString() === req.userId)
-    );
+      const calculatedTrustScore = await getMlTrustScore(req.userId, paymentHistory);
+      user.trustScore = calculatedTrustScore;
+      await user.save();
 
-    const newTrustScore = await getMlTrustScore(req.userId, paymentHistory);
-    user.trustScore = newTrustScore;
-    await user.save();
-
-    await new Notification({
-      userId: req.userId,
-      type: 'payment_received',
-      title: 'Payment Received',
-      titleUr: 'ادائیگی موصول ہوگئی',
-      message: `Payment of Rs. ${payment.amount} received for ${committee.name}`,
-      messageUr: `${committee.nameUr} کی Rs. ${payment.amount} کی ادائیگی موصول ہوگئی`,
-      relatedId: committee._id,
-    }).save();
+      await new Notification({
+        userId: req.userId,
+        type: 'payment_received',
+        title: 'Payment Received',
+        titleUr: 'ادائیگی موصول ہوگئی',
+        message: `Payment of Rs. ${payment.amount} received for ${committee.name}`,
+        messageUr: `${committee.nameUr} کی Rs. ${payment.amount} کی ادائیگی موصول ہوگئی`,
+        relatedId: committee._id,
+      }).save();
+      trustScore = calculatedTrustScore;
+    } catch (error) {
+      console.error('Error updating trust score or creating payment notification:', error);
+    }
 
     res.json({
       success: true,
       payment,
-      trustScore: newTrustScore,
+      trustScore,
       message: 'Payment recorded successfully',
     });
   } catch (error) {

@@ -1,5 +1,7 @@
 import express from 'express';
 import multer from 'multer';
+import Order from '../models/Order.js';
+import Product from '../models/Product.js';
 import Storefront from '../models/Storefront.js';
 import User from '../models/User.js';
 import { verifyToken } from '../middleware/auth.js';
@@ -37,6 +39,33 @@ router.get('/:id', async (req, res) => {
       .populate('owner', 'name phone');
     if (!storefront) return res.status(404).json({ error: 'Storefront not found' });
     res.json(storefront);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/stats', verifyToken, async (req, res) => {
+  try {
+    const storefront = await Storefront.findById(req.params.id);
+    if (!storefront) return res.status(404).json({ error: 'Storefront not found' });
+    if (storefront.owner.toString() !== req.userId) {
+      return res.status(403).json({ error: 'Not authorized to view these stats' });
+    }
+
+    const [totalProducts, totalOrders, revenueResult] = await Promise.all([
+      Product.countDocuments({ storefront: storefront._id }),
+      Order.countDocuments({ storefront: storefront._id }),
+      Order.aggregate([
+        { $match: { storefront: storefront._id, status: { $ne: 'cancelled' } } },
+        { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } },
+      ]),
+    ]);
+
+    res.json({
+      totalProducts,
+      totalOrders,
+      totalRevenue: revenueResult[0]?.totalRevenue || 0,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

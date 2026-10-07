@@ -4,6 +4,8 @@ This is the single source of truth for every backend endpoint. If the backend ch
 
 **Base URL (local dev):** `http://localhost:5000/api`
 
+Note: API_CONTRACT.md's GET /api/market-insights (Express, called by the frontend) and AI_SERVICE_CONTRACT.md's GET /market-insights (Python, called by the backend) are two different endpoints with the same name at different layers. Person A only ever calls the Express one.
+
 ## Conventions
 
 - All protected routes require a header: `Authorization: Bearer <token>` (token comes from `/auth/verify-otp`)
@@ -11,6 +13,18 @@ This is the single source of truth for every backend endpoint. If the backend ch
 - All error responses have the same shape: `{ "error": "message describing what went wrong" }`
 - Dates are ISO 8601 strings (e.g. `"2026-10-05T14:30:00.000Z"`)
 - `id` fields are MongoDB ObjectId strings (24 hex characters, e.g. `"66f1a2b3c4d5e6f7a8b9c0d1"`)
+
+---
+
+## Health
+
+### `GET /health`
+Public — no authentication required. This health check is served at the server root, outside the `/api` prefix.
+
+**Response `200`:**
+```json
+{ "status": "ok", "timestamp": "2026-10-07T14:30:00.000Z" }
+```
 
 ---
 
@@ -111,6 +125,17 @@ Public. Browse/search storefronts.
 
 ### `GET /storefronts/:id`
 Public. Same object shape as one item above.
+
+---
+
+### `GET /storefronts/:id/stats` 🔒
+Owner-only. Get basic stats for your storefront.
+
+**Response `200`:**
+```json
+{ "totalProducts": 12, "totalOrders": 34, "totalRevenue": 5678 }
+```
+All values are numbers.
 
 ---
 
@@ -275,7 +300,7 @@ Mark this month's payment as paid.
 ```json
 { "success": true, "payment": { "month": 3, "amount": 2000, "status": "paid", "paidDate": "...", "transactionId": "TXN_..." }, "trustScore": 78, "message": "Payment recorded successfully" }
 ```
-> `trustScore` here is the user's **new** score after this payment, computed by the ML model (falls back to a rule-based score if that service is unreachable — the number itself always comes back the same way either way).
+> `trustScore` is the recalculated score when the post-payment update succeeds. If the trust-score or notification step fails, the backend logs the failure and returns the user's score from before the update attempt.
 
 ---
 
@@ -299,6 +324,30 @@ Full committee detail, including `userPayments` — just the logged-in user's ow
 > `sessionId` — generate a UUID client-side per conversation thread and reuse it for the whole chat session so history stays grouped.
 
 ### `GET /chatbot/history/:sessionId` 🔒 — full message history for that session, oldest first.
+
+---
+
+## Market Insights (Frontend → Backend)
+
+### `GET /api/market-insights`
+Public — no authentication required. This is the endpoint the frontend calls. The Express backend calls the Python ai-service's separate `GET /market-insights` endpoint and passes its response through. The internal backend-to-ai-service endpoint is documented in [AI_SERVICE_CONTRACT.md](AI_SERVICE_CONTRACT.md).
+
+**Query params:**
+- `category` — required. Product category such as `tailoring`, `food`, `crafts`, `tutoring`, or `other`.
+- `region` — optional. For example, `Islamabad`.
+
+**Response `200`:**
+```json
+{
+  "category": "tailoring",
+  "region": "Islamabad",
+  "averagePrice": { "min": 800, "max": 3500, "typical": 1500 },
+  "demandTrend": "rising",
+  "topSellingItems": ["stitched kurta", "alterations", "embroidery work"],
+  "note": "Demand for custom stitching typically rises ahead of Eid."
+}
+```
+The response shape matches the ai-service contract. The backend returns `503` if insights are unavailable.
 
 ---
 
