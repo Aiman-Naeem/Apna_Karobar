@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import connectDB from './config/db.js';
 
 import authRoutes from './routes/authRoutes.js';
@@ -12,10 +14,11 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import chatbotRoutes from './routes/chatbotRoutes.js';
 import marketInsightRoutes from './routes/marketInsightRoutes.js';
 
-dotenv.config();
+const backendRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+dotenv.config({ path: resolve(backendRoot, '.env') });
 
 if (!process.env.JWT_SECRET) {
-  console.error('❌ JWT_SECRET is not set in your .env file. See .env.example.');
+  console.error('❌ JWT_SECRET is not set. Copy backend/.env.example to backend/.env and configure it.');
   process.exit(1);
 }
 

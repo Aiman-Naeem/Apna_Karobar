@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-200: #99f6e4;
+  --color-brand-500: #14b8a6;
+  --color-brand-600: #0d9488;
+  --color-brand-700: #0f766e;
+  --color-brand-800: #115e59;
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #f59e0b;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+body {
+  @apply bg-stone-50 text-stone-800 antialiased;
+  font-family: var(--font-sans);
+}
+
+/* Urdu (RTL): Nastaliq script needs taller lines or it gets clipped */
+html[dir="rtl"] body {
+  font-family: "Noto Nastaliq Urdu", "Plus Jakarta Sans", serif;
+  line-height: 2.1;
+}
+html[dir="rtl"] button,
+html[dir="rtl"] input,
+html[dir="rtl"] a {
+  line-height: 2;
+}
+/* numbers & phone inputs stay left-to-right even in Urdu */
+.ltr-field { direction: ltr; text-align: start; }
+html[dir="rtl"] .ltr-field { text-align: right; }
