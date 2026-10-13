@@ -18,9 +18,11 @@ export function LanguageProvider({ children }) {
 
   // t('login.title') -> walks the translations object, falls back to English
   const t = useCallback(
-    (path) => {
+    (path, values) => {
       const find = (obj) => path.split('.').reduce((o, k) => (o ? o[k] : undefined), obj)
-      return find(translations[lang]) ?? find(translations.en) ?? path
+      const value = find(translations[lang]) ?? find(translations.en) ?? path
+      if (typeof value !== 'string' || !values) return value
+      return value.replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match)
     },
     [lang]
   )

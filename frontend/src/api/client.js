@@ -54,5 +54,35 @@ export const api = {
     request('/auth/verify-otp', { method: 'POST', body: { phone, otp, ...(name ? { name } : {}) } }),
   me: () => request('/auth/me'),
   updateProfile: (data) => request('/auth/update-profile', { method: 'PUT', body: data }),
-  // More endpoints get added here screen by screen (storefronts, products, orders, kameti, chatbot)
+  // Storefronts
+  getStorefront: (id) => request(`/storefronts/${id}`),
+  getStorefronts: (params = {}) => request(`/storefronts?${new URLSearchParams(params)}`),
+  createStorefront: (form) => request('/storefronts', { method: 'POST', form }),
+  updateStorefront: (id, form) => request(`/storefronts/${id}`, { method: 'PUT', form }),
+  getStorefrontStats: (id) => request(`/storefronts/${id}/stats`),
+  // Products
+  getProducts: (storefrontId) => request(`/products/storefront/${storefrontId}`),
+  createProduct: (form) => request('/products', { method: 'POST', form }),
+  updateProduct: (id, form) => request(`/products/${id}`, { method: 'PUT', form }),
+  deleteProduct: (id) => request(`/products/${id}`, { method: 'DELETE' }),
+  // Orders
+  placeOrder: (data) => request('/orders', { method: 'POST', body: data }),
+  getMyOrders: () => request('/orders/my-orders'),
+  getStorefrontOrders: (id) => request(`/orders/storefront/${id}`),
+  updateOrderStatus: (id, status) => request(`/orders/${id}/status`, { method: 'PUT', body: { status } }),
+  // Kameti
+  getCommittees: () => request('/kameti/committees'),
+  getCommittee: (id) => request(`/kameti/committees/${id}`),
+  createCommittee: (data) => request('/kameti/committees', { method: 'POST', body: data }),
+  joinCommittee: (inviteCode) => request('/kameti/committees/join', { method: 'POST', body: { inviteCode } }),
+  payCommitteeContribution: (id, month) =>
+    request(`/kameti/committees/${id}/pay`, { method: 'POST', body: { month } }),
+  // AI services
+  sendChatMessage: (message, sessionId) => request('/chatbot/message', { method: 'POST', body: { message, sessionId } }),
+  getChatHistory: (sessionId) => request(`/chatbot/history/${encodeURIComponent(sessionId)}`),
+  getMarketInsights: (category, region) => {
+    const params = new URLSearchParams({ category })
+    if (region) params.set('region', region)
+    return request(`/market-insights?${params}`)
+  },
 }

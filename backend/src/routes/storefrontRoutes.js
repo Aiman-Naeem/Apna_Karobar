@@ -13,6 +13,17 @@ const upload = multer({
 
 const router = express.Router();
 
+const hasLocationInput = (body) =>
+  body.location !== undefined || body['location[city]'] !== undefined || body['location[area]'] !== undefined;
+
+const getLocation = (body, current = {}) => {
+  const nested = body.location && typeof body.location === 'object' ? body.location : {};
+  return {
+    city: body['location[city]'] ?? nested.city ?? current.city ?? '',
+    area: body['location[area]'] ?? nested.area ?? current.area ?? '',
+  };
+};
+
 // Browse/search storefronts (public). Excludes coverImage.data for the same
 // reason as products — use GET /:id/cover-image to render each one's image.
 router.get('/', async (req, res) => {
@@ -93,7 +104,7 @@ router.post('/', verifyToken, upload.single('coverImage'), async (req, res) => {
       return res.status(400).json({ error: 'You already have a storefront' });
     }
 
-    const { name, nameUr, category, description, descriptionUr, location, contactPhone } = req.body;
+    const { name, nameUr, category, description, descriptionUr, contactPhone } = req.body;
     if (!name) {
       return res.status(400).json({ error: 'Storefront name is required' });
     }
@@ -105,7 +116,7 @@ router.post('/', verifyToken, upload.single('coverImage'), async (req, res) => {
       category,
       description,
       descriptionUr,
-      location,
+      location: getLocation(req.body),
       contactPhone,
     });
 
@@ -144,6 +155,7 @@ router.put('/:id', verifyToken, upload.single('coverImage'), async (req, res) =>
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) storefront[field] = req.body[field];
     });
+    if (hasLocationInput(req.body)) storefront.location = getLocation(req.body, storefront.location);
 
     if (req.file) {
       storefront.coverImage = {

@@ -1,12 +1,13 @@
 import { NavLink, Outlet, Link } from 'react-router-dom'
-import { Home, Store, ClipboardList, PiggyBank, Bot, LogOut } from 'lucide-react'
+import { Home, Search, Store as StoreIcon, ClipboardList, PiggyBank, Bot, LogOut } from 'lucide-react'
 import { useLang } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import LanguageToggle from './LanguageToggle.jsx'
 
 const links = [
   { to: '/', key: 'nav.home', icon: Home, end: true },
-  { to: '/browse', key: 'nav.browse', icon: Store },
+  { to: '/my-store', key: 'nav.myStore', icon: StoreIcon },
+  { to: '/browse', key: 'nav.browse', icon: Search },
   { to: '/orders', key: 'nav.orders', icon: ClipboardList },
   { to: '/kameti', key: 'nav.kameti', icon: PiggyBank },
   { to: '/advisor', key: 'nav.advisor', icon: Bot },
@@ -23,7 +24,7 @@ export default function Layout() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2">
           <Link to="/" className="flex items-center gap-2 text-lg font-bold text-brand-700">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-700 text-white">
-              <Store size={20} />
+              <StoreIcon size={20} />
             </span>
             {t('appName')}
           </Link>
@@ -65,7 +66,7 @@ export default function Layout() {
       </main>
 
       {/* Mobile bottom tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-stone-200 bg-white md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-stone-200 bg-white md:hidden">
         {links.map(({ to, key, icon: Icon, end }) => (
           <NavLink
             key={to}
